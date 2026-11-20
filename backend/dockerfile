@@ -1,0 +1,22 @@
+# 1. Sử dụng base image node:20-alpine
+FROM node:20-alpine
+
+# Prisma trên Alpine Linux cần thêm thư viện openssl để hoạt động ổn định
+RUN apk add --no-cache openssl
+
+# Thiết lập thư mục làm việc bên trong container
+WORKDIR /app
+
+# 2. Sao chép package.json (và package-lock.json nếu có), chạy npm install
+COPY package*.json ./
+RUN npm install
+
+# 3. Sao chép toàn bộ mã nguồn (bao gồm thư mục prisma) và chạy npx prisma generate
+COPY . .
+RUN npx prisma generate
+
+# (Tùy chọn) Mở cổng mà server của bạn đang lắng nghe (ví dụ 3000 hoặc 5000)
+EXPOSE 3000
+
+# 4. Thiết lập lệnh khởi chạy: chạy migration lên DB trước, sau đó start server
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
